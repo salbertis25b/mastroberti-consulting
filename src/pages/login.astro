@@ -1,0 +1,95 @@
+---
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout title="Login — Mastroberti Consulting">
+  <div class="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
+    <div class="w-full max-w-md">
+
+      <div class="flex justify-center mb-8">
+        <img src="/logo.svg" alt="Mastroberti Consulting" class="h-16 w-auto" />
+      </div>
+
+      <div class="border border-[#1e1e1e] p-8 rounded-sm">
+        <h1 class="text-white text-xl font-light tracking-widest mb-8 text-center">
+          Client Portal
+        </h1>
+
+        <p id="errore" class="text-red-400 text-sm mb-6 text-center hidden">
+          Invalid email or password.
+        </p>
+
+        <div class="space-y-6">
+          <div>
+            <label class="block text-[#555] text-xs tracking-widest uppercase mb-2">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              required
+              class="w-full bg-[#111] border border-[#2a2a2a] text-white px-4 py-3
+                     rounded-sm focus:outline-none focus:border-[#9A7020] transition-colors"
+            />
+          </div>
+
+          <div>
+            <label class="block text-[#555] text-xs tracking-widest uppercase mb-2">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              class="w-full bg-[#111] border border-[#2a2a2a] text-white px-4 py-3
+                     rounded-sm focus:outline-none focus:border-[#9A7020] transition-colors"
+            />
+          </div>
+
+          <button
+            id="login-btn"
+            class="w-full bg-[#9A7020] text-[#0a0a0a] py-3 text-sm tracking-widest
+                   uppercase hover:bg-[#C8A030] transition-colors rounded-sm"
+          >
+            Access Portal
+          </button>
+        </div>
+      </div>
+
+      <p class="text-[#333] text-xs text-center mt-6">mastroberti.io</p>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js'
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  )
+
+  // Se già loggato vai al dashboard
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session) {
+    window.location.href = '/dashboard'
+  }
+
+  const btn = document.getElementById('login-btn')
+  const erroreEl = document.getElementById('errore')
+
+  btn?.addEventListener('click', async () => {
+    const email = (document.getElementById('email') as HTMLInputElement).value
+    const password = (document.getElementById('password') as HTMLInputElement).value
+
+    if (!email || !password) return
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      erroreEl?.classList.remove('hidden')
+    } else {
+      window.location.href = '/dashboard'
+    }
+  })
+</script>
