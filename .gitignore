@@ -12,6 +12,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .wrangler/
+wrangler.jsonc
+dist/
+node_modules/
 
 # environment variables
 .env
