@@ -282,15 +282,15 @@ import Layout from '../layouts/Layout.astro'
     fileInput?.addEventListener('change', function() { aggiornaSelezionati(Array.from(fileInput.files || [])) })
 
     function aggiornaSelezionati(files) {
-      selectedFiles = files
+      selectedFiles = selectedFiles.concat(Array.from(files))
       if (selectedListEl) {
-        selectedListEl.innerHTML = files.map(function(f) {
+        selectedListEl.innerHTML = selectedFiles.map(function(f) {
           return '<div style="display:flex;align-items:center;gap:12px;padding:6px 0;font-size:13px;">' +
             '<span style="color:#9A7020">—</span><span style="color:white">' + f.name + '</span>' +
             '<span style="margin-left:auto;color:#333">' + (f.size / 1024).toFixed(1) + ' KB</span></div>'
         }).join('')
       }
-      if (uploadBtn && files.length > 0) uploadBtn.style.display = 'block'
+      if (uploadBtn && selectedFiles.length > 0) uploadBtn.style.display = 'block'
     }
 
     uploadBtn?.addEventListener('click', async function() {
