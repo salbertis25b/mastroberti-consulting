@@ -9,9 +9,7 @@ import Layout from '../layouts/Layout.astro'
     <header class="border-b border-[#1e1e1e] px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <img src="/logo.svg" alt="Mastroberti Consulting" class="h-10 w-auto" />
-        <span class="text-[#9A7020] text-xs tracking-widest uppercase">
-          Client Portal
-        </span>
+        <span class="text-[#9A7020] text-xs tracking-widest uppercase">Client Portal</span>
       </div>
       <div class="flex items-center gap-4">
         <span id="user-email" class="text-[#555] text-sm"></span>
@@ -35,15 +33,15 @@ import Layout from '../layouts/Layout.astro'
 
       <!-- Audit Status -->
       <div class="border border-[#1e1e1e] rounded-sm p-6 flex items-center gap-4">
-        <div class="w-2 h-2 rounded-full bg-[#9A7020] flex-shrink-0"></div>
+        <div class="w-2 h-2 rounded-full bg-[#9A7020] shrink-0"></div>
         <span id="status-text" class="text-white text-sm">Initiated — awaiting documents</span>
       </div>
 
-      <!-- Confirm Audit — sopra la finestra tab -->
+      <!-- Confirm Audit -->
       <div id="confirm-section">
 
-        <!-- In attesa di conferma -->
-        <div id="confirm-pending" class="border border-[#9A7020] border-opacity-40 rounded-sm p-6 space-y-4">
+        <!-- Pending -->
+        <div id="confirm-pending" class="border border-[#9A7020] rounded-sm p-6 space-y-4">
           <p class="text-[#aaa] text-sm leading-relaxed">
             Once you have uploaded all necessary documents, confirm the start of your audit.
             <strong class="text-white"> This action is irreversible</strong> — after confirmation
@@ -64,9 +62,8 @@ import Layout from '../layouts/Layout.astro'
           </button>
         </div>
 
-        <!-- Confermato -->
-        <div id="confirm-done" style="display:none"
-          class="border border-[#1e1e1e] rounded-sm p-6">
+        <!-- Confirmed -->
+        <div id="confirm-done" style="display:none" class="border border-[#1e1e1e] rounded-sm p-6">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-2 h-2 rounded-full" style="background:#22c55e"></div>
             <span class="text-white text-sm">Audit confirmed and in progress</span>
@@ -89,7 +86,7 @@ import Layout from '../layouts/Layout.astro'
 
       </div>
 
-      <!-- Finestra con Tab -->
+      <!-- Tabbed Window -->
       <div class="border border-[#1e1e1e] rounded-sm overflow-hidden">
 
         <!-- Tab Bar -->
@@ -106,10 +103,8 @@ import Layout from '../layouts/Layout.astro'
           </button>
         </div>
 
-        <!-- Tab 1: Your Documents -->
+        <!-- Panel 1: Your Documents -->
         <div id="panel-uploads" class="p-8">
-
-          <!-- Upload area -->
           <div id="upload-section">
             <div id="drop-zone"
               class="border-2 border-dashed border-[#2a2a2a] rounded-sm p-10
@@ -125,20 +120,13 @@ import Layout from '../layouts/Layout.astro'
               Upload Files
             </button>
           </div>
-
-          <!-- Lista file già caricati -->
-          <div>
-            <p class="text-[#555] text-xs tracking-widest uppercase mb-4">
-              Uploaded Documents
-            </p>
-            <div id="uploads-list">
-              <p class="text-[#333] text-sm">No documents uploaded yet.</p>
-            </div>
+          <p class="text-[#555] text-xs tracking-widest uppercase mb-4">Uploaded Documents</p>
+          <div id="uploads-list">
+            <p class="text-[#333] text-sm">No documents uploaded yet.</p>
           </div>
-
         </div>
 
-        <!-- Tab 2: Audit Documents -->
+        <!-- Panel 2: Audit Documents -->
         <div id="panel-deliverables" class="p-8" style="display:none">
           <p class="text-[#555] text-xs tracking-widest uppercase mb-4">
             Documents from Mastroberti Consulting
@@ -172,19 +160,19 @@ import Layout from '../layouts/Layout.astro'
     const user = session.user
     const nome = user.user_metadata?.nome || user.email
 
-    document.getElementById('content').style.display = 'block'
+    const contentEl = document.getElementById('content')
+    if (contentEl) contentEl.style.display = 'block'
+
     const welcomeEl = document.getElementById('welcome')
     const emailEl = document.getElementById('user-email')
     if (welcomeEl) welcomeEl.textContent = 'Welcome, ' + nome
     if (emailEl) emailEl.textContent = user.email || ''
 
-    // ── Logout ──
-    document.getElementById('logout-btn')?.addEventListener('click', async () => {
+    document.getElementById('logout-btn')?.addEventListener('click', async function() {
       await supabase.auth.signOut()
       window.location.href = '/login'
     })
 
-    // ── Tab switching ──
     const tabUploads = document.getElementById('tab-uploads')
     const tabDeliverables = document.getElementById('tab-deliverables')
     const panelUploads = document.getElementById('panel-uploads')
@@ -192,252 +180,175 @@ import Layout from '../layouts/Layout.astro'
 
     function attivaTab(tab) {
       if (tab === 'uploads') {
-        panelUploads.style.display = 'block'
-        panelDeliverables.style.display = 'none'
-        tabUploads.classList.add('border-[#9A7020]', 'text-[#9A7020]', 'bg-[#0f0f0f]')
-        tabUploads.classList.remove('border-transparent', 'text-[#555]', 'bg-[#0a0a0a]')
-        tabDeliverables.classList.add('border-transparent', 'text-[#555]', 'bg-[#0a0a0a]')
-        tabDeliverables.classList.remove('border-[#9A7020]', 'text-[#9A7020]', 'bg-[#0f0f0f]')
+        if (panelUploads) panelUploads.style.display = 'block'
+        if (panelDeliverables) panelDeliverables.style.display = 'none'
+        if (tabUploads) { tabUploads.style.borderBottomColor = '#9A7020'; tabUploads.style.color = '#9A7020'; tabUploads.style.background = '#0f0f0f' }
+        if (tabDeliverables) { tabDeliverables.style.borderBottomColor = 'transparent'; tabDeliverables.style.color = '#555'; tabDeliverables.style.background = '#0a0a0a' }
       } else {
-        panelUploads.style.display = 'none'
-        panelDeliverables.style.display = 'block'
-        tabDeliverables.classList.add('border-[#9A7020]', 'text-[#9A7020]', 'bg-[#0f0f0f]')
-        tabDeliverables.classList.remove('border-transparent', 'text-[#555]', 'bg-[#0a0a0a]')
-        tabUploads.classList.add('border-transparent', 'text-[#555]', 'bg-[#0a0a0a]')
-        tabUploads.classList.remove('border-[#9A7020]', 'text-[#9A7020]', 'bg-[#0f0f0f]')
+        if (panelUploads) panelUploads.style.display = 'none'
+        if (panelDeliverables) panelDeliverables.style.display = 'block'
+        if (tabDeliverables) { tabDeliverables.style.borderBottomColor = '#9A7020'; tabDeliverables.style.color = '#9A7020'; tabDeliverables.style.background = '#0f0f0f' }
+        if (tabUploads) { tabUploads.style.borderBottomColor = 'transparent'; tabUploads.style.color = '#555'; tabUploads.style.background = '#0a0a0a' }
       }
     }
 
-    tabUploads?.addEventListener('click', () => attivaTab('uploads'))
-    tabDeliverables?.addEventListener('click', () => attivaTab('deliverables'))
+    tabUploads?.addEventListener('click', function() { attivaTab('uploads') })
+    tabDeliverables?.addEventListener('click', function() { attivaTab('deliverables') })
 
-    // ── Mostra bottone conferma ──
     function mostraBottoneConferma() {
       const btn = document.getElementById('confirm-btn')
       if (btn) btn.style.display = 'block'
     }
 
-    // ── Mostra stato confermato ──
-    function mostraConfermato(dataInizio) {
-      document.getElementById('confirm-pending').style.display = 'none'
-      document.getElementById('confirm-done').style.display = 'block'
+    function mostraConfermato(dataInizio, dataScadenzaStr) {
+      const pendingEl = document.getElementById('confirm-pending')
+      const doneEl = document.getElementById('confirm-done')
+      if (pendingEl) pendingEl.style.display = 'none'
+      if (doneEl) doneEl.style.display = 'block'
 
       const uploadSection = document.getElementById('upload-section')
-      if (uploadSection) {
-        uploadSection.style.opacity = '0.35'
-        uploadSection.style.pointerEvents = 'none'
-      }
+      if (uploadSection) { uploadSection.style.opacity = '0.35'; uploadSection.style.pointerEvents = 'none' }
 
       const inizio = new Date(dataInizio)
-      const scadenza = new Date(inizio.getTime() + 5 * 24 * 60 * 60 * 1000)
+      const scadenza = dataScadenzaStr ? new Date(dataScadenzaStr) : new Date(inizio.getTime() + 7 * 24 * 60 * 60 * 1000)
 
       const startEl = document.getElementById('start-date')
       const deliveryEl = document.getElementById('delivery-date')
-      if (startEl) startEl.textContent = inizio.toLocaleDateString('en-GB', {
-        day: 'numeric', month: 'long', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      })
-      if (deliveryEl) deliveryEl.textContent = scadenza.toLocaleDateString('en-GB', {
-        day: 'numeric', month: 'long', year: 'numeric'
-      })
-
       const statusEl = document.getElementById('status-text')
+
+      if (startEl) startEl.textContent = inizio.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      if (deliveryEl) deliveryEl.textContent = scadenza.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
       if (statusEl) statusEl.textContent = 'Confirmed — audit in progress'
 
       function aggiornaCountdown() {
-        const diff = scadenza - new Date()
+        const diff = scadenza.getTime() - new Date().getTime()
         const el = document.getElementById('countdown')
         if (!el) return
         if (diff <= 0) { el.textContent = 'Delivery due'; return }
-        const g = Math.floor(diff / (1000*60*60*24))
-        const h = Math.floor((diff % (1000*60*60*24)) / (1000*60*60))
-        const m = Math.floor((diff % (1000*60*60)) / (1000*60))
-        const s = Math.floor((diff % (1000*60)) / 1000)
+        const g = Math.floor(diff / (1000 * 60 * 60 * 24))
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+        const s = Math.floor((diff % (1000 * 60)) / 1000)
         el.textContent = g + 'd ' + h + 'h ' + m + 'm ' + s + 's'
       }
       aggiornaCountdown()
       setInterval(aggiornaCountdown, 1000)
     }
 
-    // ── Carica stato audit ──
     async function caricaStatoAudit() {
       const { data, error } = await supabase
         .from('clients')
-        .select('status, confermato, data_inizio')
+        .select('status, confermato, data_inizio, data_scadenza')
         .eq('user_id', user.id)
         .single()
       if (!error && data && data.confermato && data.data_inizio) {
-        mostraConfermato(data.data_inizio)
+        mostraConfermato(data.data_inizio, data.data_scadenza)
       }
     }
 
-    // ── Lista file già caricati in uploads ──
     async function caricaListaUploads() {
       const res = await fetch(WORKER_URL + '/list-uploads', {
         method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + session.access_token,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
       })
       if (!res.ok) return
       const { count, files } = await res.json()
-
       const listEl = document.getElementById('uploads-list')
       if (!listEl) return
-
-      if (count === 0) {
-        listEl.innerHTML = '<p style="color:#333;font-size:14px;">No documents uploaded yet.</p>'
-        return
-      }
-
-      listEl.innerHTML = files.map(f =>
-        '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;' +
-        'border-bottom:1px solid #1e1e1e;">' +
-        '<span style="color:#9A7020;font-size:12px;">—</span>' +
-        '<span style="color:#aaa;font-size:14px;">' + f + '</span>' +
-        '</div>'
-      ).join('')
-
+      if (count === 0) { listEl.innerHTML = '<p style="color:#333;font-size:14px;">No documents uploaded yet.</p>'; return }
+      listEl.innerHTML = files.map(function(f) {
+        return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #1e1e1e;">' +
+          '<span style="color:#9A7020;font-size:12px;">—</span>' +
+          '<span style="color:#aaa;font-size:14px;">' + f + '</span></div>'
+      }).join('')
       mostraBottoneConferma()
     }
 
-    // ── Upload ──
     const dropZone = document.getElementById('drop-zone')
     const fileInput = document.getElementById('file-input')
     const selectedListEl = document.getElementById('selected-list')
     const uploadBtn = document.getElementById('upload-btn')
     let selectedFiles = []
 
-    dropZone?.addEventListener('click', () => fileInput?.click())
-    dropZone?.addEventListener('dragover', e => {
-      e.preventDefault()
-      dropZone.style.borderColor = '#9A7020'
-    })
-    dropZone?.addEventListener('dragleave', () => {
-      dropZone.style.borderColor = '#2a2a2a'
-    })
-    dropZone?.addEventListener('drop', e => {
-      e.preventDefault()
-      dropZone.style.borderColor = '#2a2a2a'
-      aggiornaSelezionati(Array.from(e.dataTransfer?.files || []))
-    })
-    fileInput?.addEventListener('change', () => {
-      aggiornaSelezionati(Array.from(fileInput.files || []))
-    })
+    dropZone?.addEventListener('click', function() { fileInput?.click() })
+    dropZone?.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.style.borderColor = '#9A7020' })
+    dropZone?.addEventListener('dragleave', function() { dropZone.style.borderColor = '#2a2a2a' })
+    dropZone?.addEventListener('drop', function(e) { e.preventDefault(); dropZone.style.borderColor = '#2a2a2a'; aggiornaSelezionati(Array.from(e.dataTransfer?.files || [])) })
+    fileInput?.addEventListener('change', function() { aggiornaSelezionati(Array.from(fileInput.files || [])) })
 
     function aggiornaSelezionati(files) {
       selectedFiles = files
       if (selectedListEl) {
-        selectedListEl.innerHTML = files.map(f =>
-          '<div style="display:flex;align-items:center;gap:12px;padding:6px 0;font-size:13px;">' +
-          '<span style="color:#9A7020">—</span>' +
-          '<span style="color:white">' + f.name + '</span>' +
-          '<span style="margin-left:auto;color:#333">' + (f.size/1024).toFixed(1) + ' KB</span>' +
-          '</div>'
-        ).join('')
+        selectedListEl.innerHTML = files.map(function(f) {
+          return '<div style="display:flex;align-items:center;gap:12px;padding:6px 0;font-size:13px;">' +
+            '<span style="color:#9A7020">—</span><span style="color:white">' + f.name + '</span>' +
+            '<span style="margin-left:auto;color:#333">' + (f.size / 1024).toFixed(1) + ' KB</span></div>'
+        }).join('')
       }
       if (uploadBtn && files.length > 0) uploadBtn.style.display = 'block'
     }
 
-    uploadBtn?.addEventListener('click', async () => {
+    uploadBtn?.addEventListener('click', async function() {
       if (selectedFiles.length === 0) return
       uploadBtn.textContent = 'Uploading...'
-      uploadBtn.disabled = true
-
+      uploadBtn.setAttribute('disabled', 'true')
       let success = 0
       for (const file of selectedFiles) {
         try {
           const res = await fetch(WORKER_URL + '/upload-url', {
             method: 'POST',
-            headers: {
-              'Authorization': 'Bearer ' + session.access_token,
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
             body: JSON.stringify({ fileName: file.name }),
           })
           if (!res.ok) throw new Error()
           const { uploadUrl } = await res.json()
-          const up = await fetch(uploadUrl, {
-            method: 'PUT',
-            body: file,
-            headers: { 'Content-Type': file.type || 'application/octet-stream' },
-          })
+          const up = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } })
           if (!up.ok) throw new Error()
           success++
-        } catch (err) {
-          console.error('Upload error:', file.name)
-        }
+        } catch (err) { console.error('Upload error:', file.name) }
       }
-
       uploadBtn.textContent = '✓ ' + success + '/' + selectedFiles.length + ' uploaded'
-      uploadBtn.disabled = false
+      uploadBtn.removeAttribute('disabled')
       caricaListaUploads()
     })
 
-    // ── Conferma audit ──
-    document.getElementById('confirm-btn')?.addEventListener('click', async () => {
-      const ok = window.confirm(
-        'Are you sure? This action is irreversible.\n\n' +
-        '— You will not be able to upload additional documents\n' +
-        '— The 5-business-day delivery period begins immediately\n\n' +
-        'By confirming you agree to the Terms of Service.'
-      )
+    document.getElementById('confirm-btn')?.addEventListener('click', async function() {
+      const ok = window.confirm('Are you sure? This action is irreversible.\n\n— You will not be able to upload additional documents\n— The 5-business-day delivery period begins immediately\n\nBy confirming you agree to the Terms of Service.')
       if (!ok) return
-
       const btn = document.getElementById('confirm-btn')
+      if (!btn) return
       btn.textContent = 'Confirming...'
-      btn.disabled = true
-
+      btn.setAttribute('disabled', 'true')
       const res = await fetch(WORKER_URL + '/confirm-audit', {
         method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + session.access_token,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
       })
-
       if (res.ok) {
-        const { data_inizio } = await res.json()
-        mostraConfermato(data_inizio)
+        const json = await res.json()
+        mostraConfermato(json.data_inizio, json.data_scadenza)
       } else {
         btn.textContent = 'Error — please try again'
-        btn.disabled = false
+        btn.removeAttribute('disabled')
       }
     })
 
-    // ── Carica deliverables ──
     async function caricaDeliverables() {
       const res = await fetch(WORKER_URL + '/list-files', {
         method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + session.access_token,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
       })
       if (!res.ok) return
       const { files } = await res.json()
       const listEl = document.getElementById('deliverables-list')
       if (!listEl) return
-
-      if (files.length === 0) {
-        listEl.innerHTML = '<p style="color:#333;font-size:14px;">No audit documents available yet.</p>'
-        return
-      }
-
-      listEl.innerHTML = files.map(f =>
-        '<div style="display:flex;align-items:center;gap:12px;padding:12px 0;' +
-        'border-bottom:1px solid #1e1e1e;">' +
-        '<span style="color:white;font-size:14px;flex:1">' + f.fileName + '</span>' +
-        '<a href="' + f.downloadUrl + '" target="_blank" ' +
-        'style="background:#9A7020;color:#0a0a0a;padding:6px 16px;font-size:11px;' +
-        'letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;border-radius:2px;">' +
-        'Download</a>' +
-        '</div>'
-      ).join('')
+      if (files.length === 0) { listEl.innerHTML = '<p style="color:#333;font-size:14px;">No audit documents available yet.</p>'; return }
+      listEl.innerHTML = files.map(function(f) {
+        return '<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #1e1e1e;">' +
+          '<span style="color:white;font-size:14px;flex:1">' + f.fileName + '</span>' +
+          '<a href="' + f.downloadUrl + '" target="_blank" style="background:#9A7020;color:#0a0a0a;padding:6px 16px;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;border-radius:2px;">Download</a></div>'
+      }).join('')
     }
 
-    // ── Init ──
     caricaStatoAudit()
     caricaListaUploads()
     caricaDeliverables()
