@@ -81,7 +81,7 @@ import Layout from '../layouts/Layout.astro'
          <div class="border border-[#1e1e1e] rounded-sm p-4">
             <p class="text-[#555] text-xs tracking-widest uppercase mb-2">Time Remaining</p>
             <p id="countdown" class="text-white text-2xl font-light tracking-widest mb-3"></p>
-            <p class="text-[#fff] text-xs leading-relaxed">
+            <p class="text-[#aaa] text-xs leading-relaxed">
                 The delivery deadline is calculated on 5 working days based on the public holiday calendar
                 of North Rhine-Westphalia, Germany, where the consultant is based.
                 Weekends and public holidays are excluded.
@@ -229,7 +229,7 @@ import Layout from '../layouts/Layout.astro'
         const diff = scadenza.getTime() - new Date().getTime()
         const el = document.getElementById('countdown')
         if (!el) return
-        if (diff <= 0) { el.textContent = 'Delivery due'; return }
+        if (diff <= 0) { el.textContent = 'Your documents are ready — go to Audit Documents to download them'; return }
         const g = Math.floor(diff / (1000 * 60 * 60 * 24))
         const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
         const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
@@ -312,9 +312,12 @@ import Layout from '../layouts/Layout.astro'
           success++
         } catch (err) { console.error('Upload error:', file.name) }
       }
-      uploadBtn.textContent = '✓ ' + success + '/' + selectedFiles.length + ' uploaded'
-      uploadBtn.removeAttribute('disabled')
-      caricaListaUploads()
+          uploadBtn.style.display = 'none'
+          uploadBtn.removeAttribute('disabled')
+          selectedFiles = []
+          if (selectedListEl) selectedListEl.innerHTML = ''
+          if (fileInput) fileInput.value = ''
+          caricaListaUploads()
     })
 
     document.getElementById('confirm-btn')?.addEventListener('click', async function() {
