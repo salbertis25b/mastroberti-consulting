@@ -78,13 +78,13 @@ import Layout from '../layouts/Layout.astro'
               <p id="delivery-date" class="text-[#9A7020] text-sm font-medium"></p>
             </div>
           </div>
-         <div class="border border-[#1e1e1e] rounded-sm p-4">
+          <div class="border border-[#1e1e1e] rounded-sm p-4">
             <p class="text-[#555] text-xs tracking-widest uppercase mb-2">Time Remaining</p>
             <p id="countdown" class="text-white text-2xl font-light tracking-widest mb-3"></p>
-            <p class="text-[#aaa] text-xs leading-relaxed">
-                The delivery deadline is calculated on 5 working days based on the public holiday calendar
-                of North Rhine-Westphalia, Germany, where the consultant is based.
-                Weekends and public holidays are excluded.
+            <p class="text-[#333] text-xs leading-relaxed">
+              The delivery deadline is calculated on 5 working days based on the public holiday
+              calendar of North Rhine-Westphalia, Germany, where the consultant is based.
+              Weekends and public holidays are excluded.
             </p>
           </div>
         </div>
@@ -105,6 +105,11 @@ import Layout from '../layouts/Layout.astro'
             class="px-6 py-3 text-xs tracking-widest uppercase transition-colors
                    border-b-2 border-transparent text-[#555] hover:text-[#9A7020] bg-[#0a0a0a]">
             Audit Documents
+          </button>
+          <button id="tab-messages"
+            class="px-6 py-3 text-xs tracking-widest uppercase transition-colors
+                   border-b-2 border-transparent text-[#555] hover:text-[#9A7020] bg-[#0a0a0a]">
+            Messages
           </button>
         </div>
 
@@ -138,6 +143,25 @@ import Layout from '../layouts/Layout.astro'
           </p>
           <div id="deliverables-list">
             <p class="text-[#333] text-sm">No audit documents available yet.</p>
+          </div>
+        </div>
+
+        <!-- Panel 3: Messages -->
+        <div id="panel-messages" class="p-8" style="display:none">
+          <div id="messages-list" class="mb-6" style="max-height:400px;overflow-y:auto;">
+            <p class="text-[#333] text-sm">No messages yet.</p>
+          </div>
+          <div class="border-t border-[#1e1e1e] pt-6">
+            <textarea id="message-input"
+              placeholder="Type your message..."
+              class="w-full bg-[#111] border border-[#2a2a2a] text-white px-4 py-3 rounded-sm
+                     focus:outline-none focus:border-[#9A7020] transition-colors text-sm resize-none"
+              rows="3"></textarea>
+            <button id="send-btn"
+              class="mt-3 bg-[#9A7020] text-[#0a0a0a] px-6 py-3 text-xs tracking-widest
+                     uppercase hover:bg-[#C8A030] transition-colors rounded-sm">
+              Send Message
+            </button>
           </div>
         </div>
 
@@ -178,28 +202,27 @@ import Layout from '../layouts/Layout.astro'
       window.location.href = '/login'
     })
 
-    const tabUploads = document.getElementById('tab-uploads')
-    const tabDeliverables = document.getElementById('tab-deliverables')
-    const panelUploads = document.getElementById('panel-uploads')
-    const panelDeliverables = document.getElementById('panel-deliverables')
-
+    // ── Tab switching ──
     function attivaTab(tab) {
-      if (tab === 'uploads') {
-        if (panelUploads) panelUploads.style.display = 'block'
-        if (panelDeliverables) panelDeliverables.style.display = 'none'
-        if (tabUploads) { tabUploads.style.borderBottomColor = '#9A7020'; tabUploads.style.color = '#9A7020'; tabUploads.style.background = '#0f0f0f' }
-        if (tabDeliverables) { tabDeliverables.style.borderBottomColor = 'transparent'; tabDeliverables.style.color = '#555'; tabDeliverables.style.background = '#0a0a0a' }
-      } else {
-        if (panelUploads) panelUploads.style.display = 'none'
-        if (panelDeliverables) panelDeliverables.style.display = 'block'
-        if (tabDeliverables) { tabDeliverables.style.borderBottomColor = '#9A7020'; tabDeliverables.style.color = '#9A7020'; tabDeliverables.style.background = '#0f0f0f' }
-        if (tabUploads) { tabUploads.style.borderBottomColor = 'transparent'; tabUploads.style.color = '#555'; tabUploads.style.background = '#0a0a0a' }
-      }
+      const panels = { uploads: 'panel-uploads', deliverables: 'panel-deliverables', messages: 'panel-messages' }
+      const tabs = { uploads: 'tab-uploads', deliverables: 'tab-deliverables', messages: 'tab-messages' }
+      Object.keys(panels).forEach(function(k) {
+        const panel = document.getElementById(panels[k])
+        const tabEl = document.getElementById(tabs[k])
+        if (panel) panel.style.display = k === tab ? 'block' : 'none'
+        if (tabEl) {
+          tabEl.style.borderBottomColor = k === tab ? '#9A7020' : 'transparent'
+          tabEl.style.color = k === tab ? '#9A7020' : '#555'
+          tabEl.style.background = k === tab ? '#0f0f0f' : '#0a0a0a'
+        }
+      })
     }
 
-    tabUploads?.addEventListener('click', function() { attivaTab('uploads') })
-    tabDeliverables?.addEventListener('click', function() { attivaTab('deliverables') })
+    document.getElementById('tab-uploads')?.addEventListener('click', function() { attivaTab('uploads') })
+    document.getElementById('tab-deliverables')?.addEventListener('click', function() { attivaTab('deliverables') })
+    document.getElementById('tab-messages')?.addEventListener('click', function() { attivaTab('messages') })
 
+    // ── Conferma audit ──
     function mostraBottoneConferma() {
       const btn = document.getElementById('confirm-btn')
       if (btn) btn.style.display = 'block'
@@ -251,6 +274,27 @@ import Layout from '../layouts/Layout.astro'
       }
     }
 
+    document.getElementById('confirm-btn')?.addEventListener('click', async function() {
+      const ok = window.confirm('Are you sure? This action is irreversible.\n\n— You will not be able to upload additional documents\n— The 5-business-day delivery period begins immediately\n\nBy confirming you agree to the Terms of Service.')
+      if (!ok) return
+      const btn = document.getElementById('confirm-btn')
+      if (!btn) return
+      btn.textContent = 'Confirming...'
+      btn.setAttribute('disabled', 'true')
+      const res = await fetch(WORKER_URL + '/confirm-audit', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      })
+      if (res.ok) {
+        const json = await res.json()
+        mostraConfermato(json.data_inizio, json.data_scadenza)
+      } else {
+        btn.textContent = 'Error — please try again'
+        btn.removeAttribute('disabled')
+      }
+    })
+
+    // ── Upload ──
     async function caricaListaUploads() {
       const res = await fetch(WORKER_URL + '/list-uploads', {
         method: 'POST',
@@ -312,34 +356,15 @@ import Layout from '../layouts/Layout.astro'
           success++
         } catch (err) { console.error('Upload error:', file.name) }
       }
-          uploadBtn.style.display = 'none'
-          uploadBtn.removeAttribute('disabled')
-          selectedFiles = []
-          if (selectedListEl) selectedListEl.innerHTML = ''
-          if (fileInput) fileInput.value = ''
-          caricaListaUploads()
+      uploadBtn.style.display = 'none'
+      uploadBtn.removeAttribute('disabled')
+      selectedFiles = []
+      if (selectedListEl) selectedListEl.innerHTML = ''
+      if (fileInput) fileInput.value = ''
+      caricaListaUploads()
     })
 
-    document.getElementById('confirm-btn')?.addEventListener('click', async function() {
-      const ok = window.confirm('Are you sure? This action is irreversible.\n\n— You will not be able to upload additional documents\n— The 5-business-day delivery period begins immediately\n\nBy confirming you agree to the Terms of Service.')
-      if (!ok) return
-      const btn = document.getElementById('confirm-btn')
-      if (!btn) return
-      btn.textContent = 'Confirming...'
-      btn.setAttribute('disabled', 'true')
-      const res = await fetch(WORKER_URL + '/confirm-audit', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
-      })
-      if (res.ok) {
-        const json = await res.json()
-        mostraConfermato(json.data_inizio, json.data_scadenza)
-      } else {
-        btn.textContent = 'Error — please try again'
-        btn.removeAttribute('disabled')
-      }
-    })
-
+    // ── Deliverables ──
     async function caricaDeliverables() {
       const res = await fetch(WORKER_URL + '/list-files', {
         method: 'POST',
@@ -357,8 +382,58 @@ import Layout from '../layouts/Layout.astro'
       }).join('')
     }
 
+    // ── Messages ──
+    function renderMessaggi(messages) {
+      const listEl = document.getElementById('messages-list')
+      if (!listEl) return
+      if (messages.length === 0) {
+        listEl.innerHTML = '<p style="color:#333;font-size:14px;">No messages yet.</p>'
+        return
+      }
+      listEl.innerHTML = messages.map(function(m) {
+        const isClient = m.mittente === 'client'
+        return '<div style="display:flex;flex-direction:column;align-items:' + (isClient ? 'flex-end' : 'flex-start') + ';margin-bottom:16px;">' +
+          '<div style="max-width:80%;background:' + (isClient ? '#1a1a1a' : '#0f0f0f') + ';border:1px solid ' + (isClient ? '#2a2a2a' : '#9A7020') + ';padding:12px 16px;border-radius:4px;">' +
+          '<p style="color:' + (isClient ? '#aaa' : '#fff') + ';font-size:14px;line-height:1.5;margin:0;">' + m.testo + '</p>' +
+          '</div>' +
+          '<span style="color:#333;font-size:11px;margin-top:4px;">' +
+          (isClient ? 'You' : 'Mastroberti Consulting') + ' · ' +
+          new Date(m.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) +
+          '</span></div>'
+      }).join('')
+      listEl.scrollTop = listEl.scrollHeight
+    }
+
+    async function caricaMessaggi() {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+      if (!error && data) renderMessaggi(data)
+    }
+
+    document.getElementById('send-btn')?.addEventListener('click', async function() {
+      const input = document.getElementById('message-input')
+      if (!input) return
+      const testo = input.value.trim()
+      if (!testo) return
+      const btn = document.getElementById('send-btn')
+      if (btn) btn.setAttribute('disabled', 'true')
+      const { error } = await supabase
+        .from('messages')
+        .insert({ user_id: user.id, mittente: 'client', testo: testo })
+      if (!error) {
+        input.value = ''
+        caricaMessaggi()
+      }
+      if (btn) btn.removeAttribute('disabled')
+    })
+
+    // ── Init ──
     caricaStatoAudit()
     caricaListaUploads()
     caricaDeliverables()
+    caricaMessaggi()
   }
 </script>
