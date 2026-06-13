@@ -13,12 +13,51 @@ import Layout from '../layouts/Layout.astro'
       </div>
       <div class="flex items-center gap-4">
         <span id="user-email" class="text-[#555] text-sm"></span>
+        <button id="change-pwd-btn"
+          class="text-[#333] text-xs tracking-widest uppercase hover:text-[#9A7020] transition-colors mr-4">
+          Change Password
+        </button>
         <button id="logout-btn"
           class="text-[#333] text-xs tracking-widest uppercase hover:text-[#9A7020] transition-colors">
           Logout
         </button>
       </div>
     </header>
+
+    <!-- Change Password Modal -->
+    <div id="pwd-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:50;display:none;align-items:center;justify-content:center;">
+      <div class="bg-[#0f0f0f] border border-[#1e1e1e] rounded-sm p-8 w-full max-w-md mx-4">
+        <h2 class="text-white text-sm tracking-widest uppercase mb-6">Change Password</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-[#555] text-xs tracking-widest uppercase mb-2">New Password</label>
+            <input type="password" id="new-pwd"
+              class="w-full bg-[#111] border border-[#2a2a2a] text-white px-4 py-3 rounded-sm
+                    focus:outline-none focus:border-[#9A7020] transition-colors text-sm" />
+          </div>
+          <div>
+            <label class="block text-[#555] text-xs tracking-widest uppercase mb-2">Confirm Password</label>
+            <input type="password" id="confirm-pwd"
+              class="w-full bg-[#111] border border-[#2a2a2a] text-white px-4 py-3 rounded-sm
+                    focus:outline-none focus:border-[#9A7020] transition-colors text-sm" />
+          </div>
+          <p id="pwd-error" style="display:none" class="text-red-400 text-xs"></p>
+          <p id="pwd-success" style="display:none" class="text-green-400 text-xs">Password updated successfully.</p>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button id="save-pwd-btn"
+            class="bg-[#9A7020] text-[#0a0a0a] px-6 py-3 text-xs tracking-widest
+                  uppercase hover:bg-[#C8A030] transition-colors rounded-sm">
+            Save
+          </button>
+          <button id="close-pwd-btn"
+            class="border border-[#2a2a2a] text-[#555] px-6 py-3 text-xs tracking-widest
+                  uppercase hover:border-[#9A7020] hover:text-[#9A7020] transition-colors rounded-sm">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Main -->
     <main class="max-w-4xl mx-auto px-6 py-12 space-y-6">
@@ -262,6 +301,61 @@ import Layout from '../layouts/Layout.astro'
       aggiornaCountdown()
       setInterval(aggiornaCountdown, 1000)
     }
+
+    // ── Change Password ──
+    document.getElementById('change-pwd-btn')?.addEventListener('click', function() {
+      const modal = document.getElementById('pwd-modal')
+      if (modal) modal.style.display = 'flex'
+    })
+
+    document.getElementById('close-pwd-btn')?.addEventListener('click', function() {
+      const modal = document.getElementById('pwd-modal')
+      if (modal) modal.style.display = 'none'
+      const newPwd = document.getElementById('new-pwd')
+      const confirmPwd = document.getElementById('confirm-pwd')
+      const errEl = document.getElementById('pwd-error')
+      const sucEl = document.getElementById('pwd-success')
+      if (newPwd) newPwd.value = ''
+      if (confirmPwd) confirmPwd.value = ''
+      if (errEl) errEl.style.display = 'none'
+      if (sucEl) sucEl.style.display = 'none'
+    })
+
+    document.getElementById('save-pwd-btn')?.addEventListener('click', async function() {
+      const newPwd = document.getElementById('new-pwd')?.value || ''
+      const confirmPwd = document.getElementById('confirm-pwd')?.value || ''
+      const errEl = document.getElementById('pwd-error')
+      const sucEl = document.getElementById('pwd-success')
+
+      if (errEl) errEl.style.display = 'none'
+      if (sucEl) sucEl.style.display = 'none'
+
+      if (newPwd.length < 8) {
+        if (errEl) { errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display = 'block' }
+        return
+      }
+      if (newPwd !== confirmPwd) {
+        if (errEl) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block' }
+        return
+      }
+
+      const btn = document.getElementById('save-pwd-btn')
+      if (btn) btn.setAttribute('disabled', 'true')
+
+      const { error } = await supabase.auth.updateUser({ password: newPwd })
+
+      if (error) {
+        if (errEl) { errEl.textContent = 'Error: ' + error.message; errEl.style.display = 'block' }
+      } else {
+        if (sucEl) sucEl.style.display = 'block'
+        setTimeout(function() {
+          const modal = document.getElementById('pwd-modal')
+          if (modal) modal.style.display = 'none'
+        }, 2000)
+      }
+
+      if (btn) btn.removeAttribute('disabled')
+    })
 
     async function caricaStatoAudit() {
       const { data, error } = await supabase
