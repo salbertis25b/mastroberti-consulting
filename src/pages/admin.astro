@@ -1,0 +1,279 @@
+---
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout title="Admin — Mastroberti Consulting">
+  <div id="content" style="display:none" class="min-h-screen bg-[#0a0a0a]">
+
+    <!-- Header -->
+    <header class="border-b border-[#1e1e1e] px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <img src="/logo.svg" alt="Mastroberti Consulting" class="h-10 w-auto" />
+        <span class="text-[#9A7020] text-xs tracking-widest uppercase">Admin Panel</span>
+      </div>
+      <button id="logout-btn"
+        class="text-[#333] text-xs tracking-widest uppercase hover:text-[#9A7020] transition-colors">
+        Logout
+      </button>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-12">
+      <div class="grid grid-cols-3 gap-6" style="height:calc(100vh - 160px)">
+
+        <!-- Client List -->
+        <div class="border border-[#1e1e1e] rounded-sm overflow-hidden flex flex-col">
+          <div class="border-b border-[#1e1e1e] px-6 py-4">
+            <p class="text-[#9A7020] text-xs tracking-widest uppercase">Clients</p>
+          </div>
+          <div id="client-list" class="overflow-y-auto flex-1">
+            <p class="text-[#333] text-sm p-6">Loading...</p>
+          </div>
+        </div>
+
+        <!-- Chat Panel -->
+        <div class="col-span-2 border border-[#1e1e1e] rounded-sm overflow-hidden flex flex-col">
+
+          <!-- Client Info -->
+          <div id="client-info" class="border-b border-[#1e1e1e] px-6 py-4">
+            <p class="text-[#555] text-sm">Select a client to view messages</p>
+          </div>
+
+          <!-- Messages -->
+          <div id="messages-list" class="flex-1 overflow-y-auto p-6">
+          </div>
+
+          <!-- Input -->
+          <div class="border-t border-[#1e1e1e] p-4">
+            <textarea id="message-input"
+              placeholder="Type your reply..."
+              class="w-full bg-[#111] border border-[#2a2a2a] text-white px-4 py-3 rounded-sm
+                     focus:outline-none focus:border-[#9A7020] transition-colors text-sm resize-none"
+              rows="3"></textarea>
+            <div class="flex gap-3 mt-3">
+              <button id="send-btn"
+                class="bg-[#9A7020] text-[#0a0a0a] px-6 py-3 text-xs tracking-widest
+                       uppercase hover:bg-[#C8A030] transition-colors rounded-sm">
+                Send Reply
+              </button>
+              <button id="upload-deliverable-btn"
+                class="border border-[#9A7020] text-[#9A7020] px-6 py-3 text-xs tracking-widest
+                       uppercase hover:bg-[#9A7020] hover:text-[#0a0a0a] transition-colors rounded-sm">
+                Upload Deliverable
+              </button>
+              <input type="file" id="deliverable-input" style="display:none" />
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js'
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  )
+
+  const WORKER_URL = 'https://mastroberti-webhook.salbertis25.workers.dev'
+
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session) {
+    window.location.href = '/login'
+  } else {
+    const user = session.user
+    
+    // Verifica che sia admin
+    if (user.user_metadata?.role !== 'admin') {
+      window.location.href = '/dashboard'
+    }
+
+    const contentEl = document.getElementById('content')
+    if (contentEl) contentEl.style.display = 'block'
+
+    document.getElementById('logout-btn')?.addEventListener('click', async function() {
+      await supabase.auth.signOut()
+      window.location.href = '/login'
+    })
+
+    let selectedClientId = null
+    let selectedClientEmail = null
+
+    // ── Carica lista clienti ──
+    async function caricaClienti() {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('user_id, email, nome, status, confermato, data_inizio, data_scadenza')
+        .order('data_acquisto', { ascending: false })
+
+      const listEl = document.getElementById('client-list')
+      if (!listEl) return
+
+      if (error || !data || data.length === 0) {
+        listEl.innerHTML = '<p style="color:#333;font-size:14px;padding:24px;">No clients yet.</p>'
+        return
+      }
+
+      listEl.innerHTML = data.map(function(c) {
+        const status = c.confermato ? 'confirmed' : 'initiated'
+        const statusColor = c.confermato ? '#22c55e' : '#9A7020'
+        return '<div class="client-item" data-userid="' + c.user_id + '" data-email="' + c.email + '" data-nome="' + (c.nome || c.email) + '"' +
+          ' style="padding:16px 24px;border-bottom:1px solid #1e1e1e;cursor:pointer;transition:background 0.2s;"' +
+          ' onmouseover="this.style.background=\'#0f0f0f\'" onmouseout="this.style.background=\'transparent\'">' +
+          '<p style="color:white;font-size:14px;margin:0 0 4px;">' + (c.nome || c.email) + '</p>' +
+          '<p style="color:#555;font-size:12px;margin:0 0 4px;">' + c.email + '</p>' +
+          '<div style="display:flex;align-items:center;gap:6px;">' +
+          '<div style="width:6px;height:6px;border-radius:50%;background:' + statusColor + '"></div>' +
+          '<span style="color:#555;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">' + status + '</span>' +
+          '</div></div>'
+      }).join('')
+
+      // Click listener su ogni cliente
+      document.querySelectorAll('.client-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          selectedClientId = item.getAttribute('data-userid')
+          selectedClientEmail = item.getAttribute('data-email')
+          const nome = item.getAttribute('data-nome')
+
+          // Evidenzia il selezionato
+          document.querySelectorAll('.client-item').forEach(function(el) { el.style.background = 'transparent' })
+          item.style.background = '#0f0f0f'
+
+          // Aggiorna header chat
+          const infoEl = document.getElementById('client-info')
+          if (infoEl) infoEl.innerHTML = '<p style="color:white;font-size:14px;">' + nome + '</p>' +
+            '<p style="color:#555;font-size:12px;">' + selectedClientEmail + '</p>'
+
+          caricaMessaggi()
+        })
+      })
+    }
+
+    // ── Carica messaggi del cliente selezionato ──
+    async function caricaMessaggi() {
+      if (!selectedClientId) return
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('user_id', selectedClientId)
+        .order('created_at', { ascending: true })
+
+      const listEl = document.getElementById('messages-list')
+      if (!listEl) return
+
+      if (error || !data || data.length === 0) {
+        listEl.innerHTML = '<p style="color:#333;font-size:14px;">No messages yet.</p>'
+        return
+      }
+
+      listEl.innerHTML = data.map(function(m) {
+        const isClient = m.mittente === 'client'
+        return '<div style="display:flex;flex-direction:column;align-items:' + (isClient ? 'flex-start' : 'flex-end') + ';margin-bottom:16px;">' +
+          '<div style="max-width:80%;background:' + (isClient ? '#1a1a1a' : '#0f0f0f') + ';border:1px solid ' + (isClient ? '#2a2a2a' : '#9A7020') + ';padding:12px 16px;border-radius:4px;">' +
+          '<p style="color:' + (isClient ? '#aaa' : '#fff') + ';font-size:14px;line-height:1.5;margin:0;">' + m.testo + '</p>' +
+          '</div>' +
+          '<span style="color:#333;font-size:11px;margin-top:4px;">' +
+          (isClient ? selectedClientEmail : 'You') + ' · ' +
+          new Date(m.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) +
+          '</span></div>'
+      }).join('')
+
+      listEl.scrollTop = listEl.scrollHeight
+    }
+
+    // ── Invia risposta ──
+    document.getElementById('send-btn')?.addEventListener('click', async function() {
+      if (!selectedClientId) return
+      const input = document.getElementById('message-input')
+      if (!input) return
+      const testo = input.value.trim()
+      if (!testo) return
+
+      const btn = document.getElementById('send-btn')
+      if (btn) btn.setAttribute('disabled', 'true')
+
+      const { error } = await supabase
+        .from('messages')
+        .insert({ user_id: selectedClientId, mittente: 'admin', testo: testo })
+
+      if (!error) {
+        input.value = ''
+        caricaMessaggi()
+      }
+
+      if (btn) btn.removeAttribute('disabled')
+    })
+
+    // ── Upload deliverable ──
+    const deliverableInput = document.getElementById('deliverable-input')
+
+    document.getElementById('upload-deliverable-btn')?.addEventListener('click', function() {
+      if (!selectedClientId) {
+        alert('Select a client first.')
+        return
+      }
+      deliverableInput?.click()
+    })
+
+    deliverableInput?.addEventListener('change', async function() {
+      if (!selectedClientId) return
+      const file = deliverableInput.files?.[0]
+      if (!file) return
+
+      const btn = document.getElementById('upload-deliverable-btn')
+      if (btn) { btn.textContent = 'Uploading...'; btn.setAttribute('disabled', 'true') }
+
+      try {
+        const res = await fetch(WORKER_URL + '/upload-deliverable', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + session.access_token,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ fileName: file.name, clientUserId: selectedClientId }),
+        })
+
+        if (!res.ok) throw new Error()
+        const { uploadUrl } = await res.json()
+
+        const up = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        })
+
+        if (!up.ok) throw new Error()
+
+        if (btn) { btn.textContent = '✓ Uploaded'; }
+
+        // Invia messaggio automatico al cliente
+        await supabase.from('messages').insert({
+          user_id: selectedClientId,
+          mittente: 'admin',
+          testo: 'Your audit document "' + file.name + '" has been uploaded. Go to the Audit Documents tab to download it.'
+        })
+
+        caricaMessaggi()
+
+      } catch (err) {
+        console.error('Upload error:', err)
+        if (btn) btn.textContent = 'Error — retry'
+      }
+
+      if (btn) btn.removeAttribute('disabled')
+      deliverableInput.value = ''
+    })
+
+    // ── Init ──
+    caricaClienti()
+
+    // Aggiorna messaggi ogni 30 secondi
+    setInterval(function() {
+      if (selectedClientId) caricaMessaggi()
+    }, 30000)
+  }
+</script>
